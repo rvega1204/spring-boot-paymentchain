@@ -1,0 +1,54 @@
+# NetBeans specific files
+.nb-gradle
+nbproject/
+build/
+target/
+
+# Java class files
+*.class
+
+# Log files
+*.log
+
+# IntelliJ IDEA project files (optional, in case other IDE is used)
+.idea/
+
+# Eclipse project files (optional, in case Eclipse is used)
+.project
+.classpath
+.settings/
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle wrapper
+.gradle/
+gradlew
+gradlew.bat
+
+# Dependency directories
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Java specific files
+*.jar
+*.war
+*.ear
+
+# Eclipse, IntelliJ or other IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Java Maven build files
+*.log
+*.out
+
+# JDK-related files
+hs_err_pid*
