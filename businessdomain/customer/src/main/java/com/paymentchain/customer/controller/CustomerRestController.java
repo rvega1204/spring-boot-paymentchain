@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +63,11 @@ public class CustomerRestController {
     private BusinnesTransaction businnesTransaction;
 
     /**
-     * A GET endpoint to check if the application is running and display a custom property value.
+     * A GET endpoint to check if the application is running and display a
+     * custom property value.
      *
-     * @return A greeting message along with the value of the "custom.activeprofileName" property.
+     * @return A greeting message along with the value of the
+     * "custom.activeprofileName" property.
      */
     @GetMapping("/check")
     public String check() {
@@ -101,11 +102,12 @@ public class CustomerRestController {
         }
     }
 
-     /**
+    /**
      * Retrieves a customer by their unique ID.
      *
      * @param id the unique identifier of the customer
-     * @return a ResponseEntity containing the customer data if found, or a 404 NOT FOUND status otherwise
+     * @return a ResponseEntity containing the customer data if found, or a 404
+     * NOT FOUND status otherwise
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> get(@PathVariable(name = "id") long id) {
@@ -164,14 +166,17 @@ public class CustomerRestController {
     }
 
     /**
-     * Creates a new customer using the provided input and returns the created customer.
+     * Creates a new customer using the provided input and returns the created
+     * customer.
      *
      * @param input the customer data to be created
-     * @return a ResponseEntity containing the created customer and HTTP status 201 Created
-     * @throws BusinessRuleException if any business rules are violated during customer creation
+     * @return a ResponseEntity containing the created customer and HTTP status
+     * 201 Created
+     * @throws BusinessRuleException if any business rules are violated during
+     * customer creation
      */
     @PostMapping  // Maps POST requests to /customer.
-    public ResponseEntity<?> post(@RequestBody Customer input) throws BusinessRuleException, UnknownHostException {
+    public ResponseEntity<?> post(@RequestBody Customer input) throws BusinessRuleException, UnknownHostException, InterruptedException {
         // Attempt to create a new customer by passing the input to the business transaction layer
         Customer post = businnesTransaction.post(input);
 
@@ -204,11 +209,16 @@ public class CustomerRestController {
      * @return the customer associated with the given code
      */
     @GetMapping("/byCode/{code}")
-    public Customer getByCode(@RequestParam(name = "code") String code) {
+    public Customer getByCode(@PathVariable(name = "code") String code) {
         // Use the business transaction layer to retrieve the customer by code
-        Customer customer = businnesTransaction.get(code);
+        try {
+            Customer customer = businnesTransaction.get(code);
+            return customer;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Return the retrieved customer
-        return customer;
+        return null;
     }
 }

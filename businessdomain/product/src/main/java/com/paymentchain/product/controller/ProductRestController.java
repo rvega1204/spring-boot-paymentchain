@@ -4,7 +4,9 @@
  */
 package com.paymentchain.product.controller;
 
+import com.paymentchain.product.business.transaction.BusinessTransaction;
 import com.paymentchain.product.entities.Product;
+import com.paymentchain.product.exception.BusinessRuleException;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
@@ -19,13 +21,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import com.paymentchain.product.repository.ProductRepository;
 import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /**
  *
  * @author rvega
  */
-
 /**
  * REST controller that handles HTTP requests related to Product entities.
  * Provides methods to create, retrieve, update, and delete products.
@@ -40,14 +43,39 @@ public class ProductRestController {
     @Autowired
     ProductRepository productRepository;
 
+    // Autowires the BusinessTransaction bean, allowing it to be injected automatically by Spring's dependency injection mechanism
+    @Autowired
+    private BusinessTransaction businessTransaction;  // The service to handle business logic related to transactions
+
+    // Logger to log messages for the ProductRestController class, useful for debugging and tracking application behavior
+    private static final Logger logger = LoggerFactory.getLogger(ProductRestController.class);  // Static logger instance
+
     /**
      * Retrieves a list of all products.
      *
      * @return A list of all products.
      */
     @GetMapping()  // Maps GET requests to /product.
-    public List<Product> List() {
-        return productRepository.findAll();
+    public ResponseEntity<?> List() {
+        try {
+            // Fetches all products from the productRepository
+            List<Product> findAll = productRepository.findAll();
+
+            // If the product list is empty, return a 204 No Content response
+            if (findAll.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            } else {
+                // If products are found, return them with a 200 OK response
+                return ResponseEntity.ok(findAll);
+            }
+        } catch (Exception e) {
+            // Logs any exception that occurs during the process with an error message
+            logger.error("Error getting all products: ", e.getMessage());
+
+            // Returns a 500 Internal Server Error response with a custom error message
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing your request.");
+        }
     }
 
     /**
@@ -76,20 +104,26 @@ public class ProductRestController {
      */
     @PutMapping("/{id}")  // Maps PUT requests to /product/{id}.
     public ResponseEntity<?> put(@PathVariable("id") long id, @RequestBody Product input) {
-        // Try to find the product by ID
-        Optional<Product> find = productRepository.findById(id);
+        try {
+            // Try to find the product by ID
+            Optional<Product> find = productRepository.findById(id);
 
-        // If product is found, update the fields and save the product
-        if (find.isPresent()) {
-            Product existingProduct = find.get();  // Get the existing product object
+            // If product is found, update the fields and save the product
+            if (find.isPresent()) {
+                Product existingProduct = find.get();  // Get the existing product object
 
-            // Update the product fields with the provided data
-            existingProduct.setCode(input.getCode());
-            existingProduct.setName(input.getName());
+                // Update the product fields with the provided data
+                existingProduct.setCode(input.getCode());
+                existingProduct.setName(input.getName());
 
-            // Save the updated product and return the updated object
-            Product savedProduct = productRepository.save(existingProduct);
-            return ResponseEntity.ok(savedProduct);  // Return a 200 OK response with the updated product
+                // Save the updated product and return the updated object
+                Product savedProduct = productRepository.save(existingProduct);
+                return ResponseEntity.ok(savedProduct);  // Return a 200 OK response with the updated product
+            }
+        } catch (Exception e) {
+            logger.error("Error updating product: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing your request.");
         }
 
         // If product is not found, return a 404 Not Found response
@@ -103,9 +137,9 @@ public class ProductRestController {
      * @return The created product.
      */
     @PostMapping  // Maps POST requests to /product.
-    public ResponseEntity<?> post(@RequestBody Product input) {
-        Product save = productRepository.save(input);
-        return ResponseEntity.ok(save);  // Return the saved product with a 200 OK response.
+    public ResponseEntity<?> post(@RequestBody Product input) throws BusinessRuleException {
+        Product save = businessTransaction.post(input);
+        return ResponseEntity.status(HttpStatus.CREATED).body(save);
     }
 
     /**
@@ -116,13 +150,19 @@ public class ProductRestController {
      */
     @DeleteMapping("/{id}")  // Maps DELETE requests to /product/{id}.
     public ResponseEntity<?> delete(@PathVariable("id") long id) {
-        Optional<Product> findById = productRepository.findById(id);  // Check if product exists.
+        try {
+            Optional<Product> findById = productRepository.findById(id);  // Check if product exists.
 
-        if (findById.isPresent()) {  // Product found, proceed with deletion.
-            productRepository.delete(findById.get());  // Deletes the product.
-            return ResponseEntity.ok().build();  // Return 200 OK response.
-        } else {
-            return ResponseEntity.notFound().build();  // Return 404 Not Found if product does not exist.
+            if (findById.isPresent()) {  // Product found, proceed with deletion.
+                productRepository.delete(findById.get());  // Deletes the product.
+                return ResponseEntity.ok().build();  // Return 200 OK response.
+            } else {
+                return ResponseEntity.notFound().build();  // Return 404 Not Found if product does not exist.
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting product: ", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing your request.");
         }
     }
 }

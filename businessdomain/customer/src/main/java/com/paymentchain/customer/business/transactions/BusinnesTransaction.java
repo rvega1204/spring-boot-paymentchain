@@ -5,6 +5,7 @@
 package com.paymentchain.customer.business.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentchain.customer.entities.Customer;
 import com.paymentchain.customer.entities.CustomerProduct;
 import com.paymentchain.customer.exception.BusinessRuleException;
@@ -13,6 +14,11 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Collections;
@@ -25,13 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -88,7 +90,7 @@ public class BusinnesTransaction {
      * Handles the logic for creating and saving a new customer. This method
      * also validates the products associated with the customer.
      */
-    public Customer post(Customer input) throws BusinessRuleException, UnknownHostException {
+    public Customer post(Customer input) throws BusinessRuleException, UnknownHostException, InterruptedException {
         // Check if the customer has associated products
         if (input.getProducts() != null) {
             // Iterate through the products to validate and associate them with the customer
@@ -97,7 +99,6 @@ public class BusinnesTransaction {
 
                 // Fetch the product name using the product ID
                 String productName = getProductName(dto.getProductId());
-
                 // If the product name is blank (product does not exist), throw a validation exception
                 if (productName.isBlank()) {
                     BusinessRuleException businessRuleException = new BusinessRuleException(
@@ -127,32 +128,34 @@ public class BusinnesTransaction {
      * @param code the unique code identifying the customer
      * @return the customer with enriched product details
      */
-    public Customer get(@RequestParam(name = "code") String code) {
+    public Customer get(String code) {
         // Retrieve the customer from the repository based on the provided code.
         Customer customer = customerRepository.findByCode(code);
+        if (customer != null) {
+            // Get the list of products associated with the customer.
+            List<CustomerProduct> products = customer.getProducts();
 
-        // Get the list of products associated with the customer.
-        List<CustomerProduct> products = customer.getProducts();
+            // Enrich each product with its name by calling the external product service.
+            products.forEach(product -> {
+                // Fetch the product name using the product's ID.
+                String productName = "";
+                try {
+                    productName = getProductName(product.getProductId());
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(BusinnesTransaction.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
-        // Enrich each product with its name by calling the external product service.
-        products.forEach(product -> {
-            // Fetch the product name using the product's ID.
-            String productName = "";
-            try {
-                productName = getProductName(product.getProductId());
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(BusinnesTransaction.class.getName()).log(Level.SEVERE, null, ex);
-            }
+                // Set the fetched product name into the product object.
+                product.setProductName(productName);
+            });
 
-            // Set the fetched product name into the product object.
-            product.setProductName(productName);
-        });
+            // Uncomment the following lines to include enriched transaction details for the customer.
+            // Retrieve all transactions associated with the customer's IBAN.
+            // List<?> transactions = getTransactions(customer.getIban());
+            // Update the customer object with the retrieved transactions.
+            // customer.setTransactions(transactions);
+        }
 
-        // Uncomment the following lines to include enriched transaction details for the customer.
-        // Retrieve all transactions associated with the customer's IBAN.
-        // List<?> transactions = getTransactions(customer.getIban());
-        // Update the customer object with the retrieved transactions.
-        // customer.setTransactions(transactions);
         // Return the customer with enriched product details.
         return customer;
     }
@@ -165,28 +168,57 @@ public class BusinnesTransaction {
      * @return the name of the product
      */
     private String getProductName(long id) throws UnknownHostException {
+        // URL of the product service with the given ID
+        String urlString = "http://127.0.0.1:8083/product/" + id;
+        StringBuilder response = new StringBuilder();
         String name = "";
+
         try {
-            WebClient build = createWebClient("http://BUSINESSDOMAIN-PRODUCT/product");
+            // Establish a connection to the product service
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");  // Set request method to GET
+            connection.setConnectTimeout(5000);  // Set connection timeout
+            connection.setReadTimeout(5000);     // Set read timeout
 
-            // Make a GET request to the product service with the specified ID.
-            JsonNode block = build.method(HttpMethod.GET)
-                    .uri("/" + id) // Append the product ID to the base URL.
-                    .retrieve() // Retrieve the response from the server.
-                    .bodyToMono(JsonNode.class) // Convert the response body to a JsonNode.
-                    .block(); // Block the current thread to wait for the response.    
+            // Get the response code from the connection
+            int responseCode = connection.getResponseCode();
+            
+            // Check if the response code is HTTP_OK (200)
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Try-with-resources: BufferedReader will be automatically closed at the end of the try block
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String inputLine;
 
-            // Extract the "name" field from the JSON response.
-            name = block.get("name").asText();
-        } catch (WebClientResponseException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return name;
+                    // Append each line of the response to the StringBuilder
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                }
+
+                // Parse the response JSON to extract the product name
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonResponse = objectMapper.readTree(response.toString());
+
+                // Return the product name if present in the JSON response
+                if (jsonResponse.has("name")) {
+                    name = jsonResponse.get("name").asText();
+                }
             } else {
-                throw new UnknownHostException(e.getMessage());
+                // Handle non-OK response codes
+                if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    return "";
+                }
+
+                return "Error: " + responseCode;  // Return the HTTP error code if not OK
             }
+        } catch (IOException e) {
+            // Handle any exceptions related to the connection or reading response
+            Logger.getLogger(BusinnesTransaction.class.getName()).log(Level.SEVERE, null, e);
+            e.printStackTrace();
+            throw new UnknownHostException(e.getMessage());
         }
 
-        // Return the extracted product name.
         return name;
     }
 
