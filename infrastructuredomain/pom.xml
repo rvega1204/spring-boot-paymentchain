@@ -15,6 +15,7 @@
         <module>configserver</module>
         <module>eurekaServer</module>
         <module>springBootAdmin</module>
+        <module>apigateway</module>
     </modules>
     <properties>
        <!--spring cloud version, please check the table https://spring.io/projects/spring-cloud compatibility version with spring boot framework-->
