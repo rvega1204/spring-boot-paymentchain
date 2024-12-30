@@ -93,8 +93,8 @@ public class CustomerRestController {
                 return ResponseEntity.ok(findAll);
             }
         } catch (Exception e) {
-            // Log the error with the customer ID for troubleshooting
-            logger.error("Error getting all customers: ", e);
+            // Log the error for troubleshooting
+            logger.error("Error getting all customers: ", e.getMessage());
 
             // Optionally, return a 500 INTERNAL SERVER ERROR if an exception occurs
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
