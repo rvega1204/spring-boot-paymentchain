@@ -19,12 +19,57 @@ services:
       - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
     depends_on:
       - registry-discovery
+      - configuration
+      
+  configuration:
+    container_name: configuration
+    image: configuration_image:latest
+    ports:
+      - "8888:8888"
+    environment:
+      - JAVA_OPTS=-Xms256M -Xmx256M
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+  
+  administration:
+    container_name: administration
+    image: administration_image:latest
+    ports:
+      - "8762:762"
+    environment:
+      - JAVA_OPTS=-Xms256M -Xmx256M
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
 
   customer:
     container_name: customer
     image: customer_image:latest
+    environment:
+      - JAVA_OPTS=-Xms256M -Xmx256M
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configuration
+      
+  transactions:
+    container_name: transactions
+    image: transactions_image:latest
+    environment:
+      - JAVA_OPTS=-Xms256M -Xmx256M
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
     ports:
-      - "8081:8081"
+      - "8082:8082"
+    depends_on:
+      - registry-discovery
+      - configuration
+      
+  apigateway:
+    container_name: apigateway
+    image: apigateway_image:latest
+    ports:
+      - "8080:8080"
     environment:
       - JAVA_OPTS=-Xms256M -Xmx256M
       - DEUREKA_SERVER=http://registry-discovery:8761/eureka/

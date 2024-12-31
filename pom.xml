@@ -148,29 +148,38 @@
                     </execution>
                 </executions>
             </plugin>        
-            <!--   <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
-                <version>${dockerfile-maven-version}</version>                               
+<!--            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.39.0</version>
                 <executions>
-                    <execution>                        
+                    <execution>
                         <id>build-docker-image</id>
                         <phase>package</phase>
-                        <goals>                                              
+                        <goals>
                             <goal>build</goal>
-                           <goal>push</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>                       
-                    <repository>digitalthinking/microservice-docker-${project.artifactId}</repository>
-                    <tag>${project.version}</tag>
-                    <buildArgs>
-                        <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-                    </buildArgs>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${project.artifactId}:${project.version}</name>
+                            <build>
+                                <dockerFile>${project.basedir}/Dockerfile</dockerFile>
+                                <args>
+                                    <arg>
+                                        <name>JAR_FILE</name>
+                                        <value>target/${project.build.finalName}.jar</value>
+                                    </arg>
+                                </args>
+                            </build>
+                        </image>
+                    </images>
                 </configuration>
-            </plugin>-->  
-            
+            </plugin>-->
+
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>   
