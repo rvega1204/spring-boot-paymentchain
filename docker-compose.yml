@@ -1,102 +1,145 @@
 ## YAML Template.
 ---
 services:
+  # Service for the Eureka registry discovery
   registry-discovery:
     container_name: registry-discovery
-    image: eurekaserver_image:latest
+    image: eurekaserver_image:latest  # The Eureka server image
     ports:
-      - "8761:8761"
+      - "8761:8761"  # Mapping port 8761 from container to host
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
 
+  # Service for the product catalog service
   product-catalog:
     container_name: product-catalog
-    image: product_image:latest
+    image: product_image:latest  # The product catalog service image
     ports:
-      - "8083:8083"
+      - "8083:8083"  # Mapping port 8083 from container to host
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     depends_on:
-      - registry-discovery
-      - configuration
-      
+      - registry-discovery  # This service depends on the registry-discovery service
+      - configuration  # Also depends on the configuration service
+
+  # Service for the configuration server
   configuration:
     container_name: configuration
-    image: configuration_image:latest
+    image: configuration_image:latest  # The configuration server image
     ports:
-      - "8888:8888"
+      - "8888:8888"  # Mapping port 8888 from container to host
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     depends_on:
-      - registry-discovery
-  
+      - registry-discovery  # This service depends on the registry-discovery service
+
+  # Service for the administration service
   administration:
     container_name: administration
-    image: administration_image:latest
+    image: administration_image:latest  # The administration service image
     ports:
-      - "8762:762"
+      - "8762:762"  # Mapping port 762 from container to host (Note: there seems to be a typo in the port mapping)
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     depends_on:
-      - registry-discovery
+      - registry-discovery  # This service depends on the registry-discovery service
 
+  # Service for the customer service
   customer:
     container_name: customer
-    image: customer_image:latest
+    image: customer_image:latest  # The customer service image
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     depends_on:
-      - registry-discovery
-      - configuration
-      
+      - registry-discovery  # This service depends on the registry-discovery service
+      - configuration  # Also depends on the configuration service
+
+  # Service for the transactions service
   transactions:
     container_name: transactions
-    image: transactions_image:latest
+    image: transactions_image:latest  # The transactions service image
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     ports:
-      - "8082:8082"
+      - "8082:8082"  # Mapping port 8082 from container to host
     depends_on:
-      - registry-discovery
-      - configuration
-      
+      - registry-discovery  # This service depends on the registry-discovery service
+      - configuration  # Also depends on the configuration service
+
+  # Service for the Keycloak adapter
+  keycloack:
+    container_name: keycloackAdapter
+    image: keycloack-image:latest  # The Keycloak adapter image
+    environment:
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
+      - DKEYCLOACK_SERVER=http://keycloack_server:8080/auth/realms/  # Keycloak server URL
+      - DKEYCLOACK_REAL_ID=i3VJ6BvTTIgoE-x_opMGGMIo9ACtT7MllhHY6daQ04o  # Keycloak realm ID
+    depends_on:
+      - registry-discovery  # This service depends on the registry-discovery service
+    ports:
+      - "8088:8088"  # Mapping port 8088 from container to host
+
+  # Service for the API gateway
   apigateway:
     container_name: apigateway
-    image: apigateway_image:latest
+    image: apigateway_image:latest  # The API gateway image
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Mapping port 8080 from container to host
     environment:
-      - JAVA_OPTS=-Xms256M -Xmx256M
-      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      - JAVA_OPTS=-Xms256M -Xmx256M  # Java memory options for the service
+      - DEUREKA_SERVER=http://registry-discovery:8761/eureka/  # Eureka server URL
     depends_on:
-      - registry-discovery
+      - registry-discovery  # This service depends on the registry-discovery service
 
+  # Service for the PostgreSQL database
   postgres_db:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:latest  # The PostgreSQL database image
     ports:
-      - "5432:5432"
+      - "5432:5432"  # Mapping port 5432 from container to host
     volumes:
-      - ./dbfiles:/docker-entrypoint-initdb.d
-      - ./postgres_data:/var/lib/postgresql/data
+      - ./dbfiles:/docker-entrypoint-initdb.d  # Mounting db initialization scripts
+      - ./postgres_data:/var/lib/postgresql/data  # Mounting data directory for persistence
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: qwerty
-      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres  # PostgreSQL user
+      POSTGRES_PASSWORD: qwerty  # PostgreSQL password
+      POSTGRES_DB: postgres  # PostgreSQL database name
 
+  # Service for the pgAdmin tool to manage PostgreSQL
   pgadmin4:
     container_name: pgadmin4
-    image: dpage/pgadmin4
-    restart: always
+    image: dpage/pgadmin4  # The pgAdmin tool image
+    restart: always  # Always restart the service on failure
     ports:
-      - "5050:80"
+      - "5050:80"  # Mapping port 80 from container to host
     environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "qwerty"
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"  # Default admin email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: "qwerty"  # Default admin password for pgAdmin
     depends_on:
-      - postgres_db
+      - postgres_db  # This service depends on the PostgreSQL database service
+
+  # Service for the Keycloak server
+  keycloak_server:
+    container_name: keycloak-server
+    image: quay.io/keycloak/keycloak:latest
+    command: start-dev
+    environment:
+      KC_HOSTNAME: localhost
+      
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - 8091:8080
+
+

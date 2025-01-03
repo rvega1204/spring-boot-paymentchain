@@ -1,25 +1,48 @@
 ## YAML Template.
 ---
 server:
+  # Port where the application will run
   port: 8080
+
 eureka:
   client:
     serviceUrl:
+      # Eureka server URL, defaults to local if not set
       defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka}
+
 logging:
   level:
+    # Setting the log level for Spring Cloud Gateway
     org.springframework.cloud.gateway: DEBUG
+    # Setting the log level for Reactor Netty HTTP client
     reactor.netty.http.client: DEBUG
 
 spring:
   application:
+    # Application name for the Spring Boot application
     name: apigateway  
+
   cloud:
     gateway:
+      # Defining the routes for the API Gateway
       routes:
-      - id: customer_service
+      - id: customer_byCode
+        # Load-balanced URI for the customer service
         uri: lb://businessdomain-customer
+        # Predicate to match the URL path for this route
+        predicates:
+        - Path=/customer/v1/byCode
+        filters:
+          # Filter to apply for this route
+          name: AuthenticationFiltering
+      
+      - id: customer_service
+        # Load-balanced URI for the customer service
+        uri: lb://businessdomain-customer
+        # Predicate to match all paths for this route
         predicates:
         - Path=/**
-    config:
-      enabled: false
+
+  # Disabling Spring Cloud configuration
+  config:
+    enabled: false
