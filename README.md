@@ -1,6 +1,6 @@
 # Project PaymentChain
 
-This project is a Microservices - CRUD application built using Java 21, Spring Boot, Spring Security, Docker, Spring Cloud Admin, PostgreSQL, and API Gateway. The application is designed to provide a secure and scalable solution, utilizing modern technologies to manage transactions and customers.
+This project is a CRUD application built using Java 21, Spring Boot, Spring Security, Docker, Spring Cloud Admin, PostgreSQL, JWT, Microservices, and API Gateway. The application is designed to provide a secure and scalable solution, utilizing modern technologies to manage transactions and customers.
 
 ## Microservices
 
@@ -17,6 +17,7 @@ This project is a Microservices - CRUD application built using Java 21, Spring B
 - **Spring Cloud Admin**: Provides a user interface for managing Spring Boot applications deployed on the cloud.
 - **PostgreSQL**: A powerful, open-source relational database used to store application data.
 - **API Gateway**: Handles routing and authentication for the services.
+- **Microservices**: A microservice architecture for scalability, where different services are separated and interact with each other.
 
 ## Prerequisites
 
@@ -24,6 +25,7 @@ This project is a Microservices - CRUD application built using Java 21, Spring B
 - **Docker**: Docker is required to run the application containers.
 - **PostgreSQL**: Set up PostgreSQL to manage the database.
 - **Spring Cloud Admin**: Used for monitoring Spring Boot applications.
+- **JWT Token Generation**: The application uses JWT for secure authentication between services.
 
 ## Features
 
@@ -32,6 +34,7 @@ This project is a Microservices - CRUD application built using Java 21, Spring B
 - **Security**: Authentication and authorization using Spring Security to ensure secure access to the application.
 - **Dockerized**: The entire application is containerized for ease of deployment.
 - **Spring Cloud Admin Integration**: Allows monitoring and managing the services in a distributed system.
+- **Microservices Architecture**: The application is split into several microservices that handle different aspects of the business logic (Customer service, Transaction service, Product service).
 
 ## Getting Started
 
