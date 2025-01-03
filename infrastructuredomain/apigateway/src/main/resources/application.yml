@@ -31,7 +31,7 @@ spring:
         uri: lb://businessdomain-customer
         # Predicate to match the URL path for this route
         predicates:
-        - Path=/customer/v1/byCode
+        - Path=/customer/v1/byCode/**
         filters:
           # Filter to apply for this route
           name: AuthenticationFiltering
@@ -41,7 +41,22 @@ spring:
         uri: lb://businessdomain-customer
         # Predicate to match all paths for this route
         predicates:
-        - Path=/**
+        - Path=/customer/**
+      
+      - id: transaction_service
+        # Load-balanced URI for the transaction service
+        uri: lb/businessdomain-transactions
+        # Predicates to match the URL path and HTTP methods for this route
+        predicates:
+          # Matches paths starting with /transaction/
+        - Path=/transaction/**
+          # Matches GET, POST, PUT, and DELETE HTTP methods
+        - Method=GET,POST,PUT,DELETE
+        # Filters to apply for this route
+        filters:
+          # Filter applied for authentication processing
+        - name: AuthenticationFiltering
+
 
   # Disabling Spring Cloud configuration
   config:
