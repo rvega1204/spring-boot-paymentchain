@@ -4,9 +4,9 @@ This project is a Microservices - CRUD application built using Java 21, Spring B
 
 ## Microservices
 
-- **Customer
-- **Product
-- **Transactions
+- Customer
+- Product
+- Transactions
 
 ## Technologies Used
 
