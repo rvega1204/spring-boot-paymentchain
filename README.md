@@ -1,6 +1,12 @@
 # Project PaymentChain
 
-This project is a CRUD application built using Java 21, Spring Boot, Spring Security, Docker, Spring Cloud Admin, PostgreSQL, and API Gateway. The application is designed to provide a secure and scalable solution, utilizing modern technologies to manage transactions and customers.
+This project is a Microservices - CRUD application built using Java 21, Spring Boot, Spring Security, Docker, Spring Cloud Admin, PostgreSQL, and API Gateway. The application is designed to provide a secure and scalable solution, utilizing modern technologies to manage transactions and customers.
+
+## Microservices
+
+- **Customer
+- **Product
+- **Transactions
 
 ## Technologies Used
 
